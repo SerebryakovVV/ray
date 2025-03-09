@@ -42,13 +42,14 @@ impl<'a> Image<'a> {
             eprintln!("Remaining lines: {}", self.height - i);
             std::io::stderr().flush().unwrap();
             for k in 0..self.width {
-                let r = k as f64 / (self.width-1) as f64; 
-                let g = i as f64 / (self.height-1) as f64; 
-                let b = 0.0f64; 
-                let ir = (255.999 * r) as u8;
-                let ig = (255.999 * g) as u8;
-                let ib = (255.999 * b) as u8;
-                println!("{} {} {}", ir, ig, ib);
+                let color = Color {
+                    rgb: Vec3 {
+                        x: k as f64 / (self.width-1) as f64,
+                        y: i as f64 / (self.height-1) as f64,
+                        z: 0.0f64
+                    }
+                };
+                color.draw();
             }
         }
         eprint!("done");
@@ -63,11 +64,42 @@ impl<'a> Image<'a> {
 
 
 
+struct Ray {
+    origin: Vec3,
+    direction: Vec3
+}
+
+impl Ray {
+    fn at(&self, t: f64) -> Vec3 {
+        // self.direction.new_mul_scal_vec(t).new_sum_vec(self.origin);
+    }
+}
+
 
 struct Vec3 {
     x: f64,
     y: f64,
     z: f64
+}
+
+
+
+struct Color {
+    rgb: Vec3
+}
+
+impl Color {
+    fn draw(&self) {
+        let r = self.rgb.x;
+        let g = self.rgb.y;
+        let b = self.rgb.z;
+
+        let rbyte = (r * 255.999) as u8;
+        let gbyte = (g * 255.999) as u8;
+        let bbyte = (b * 255.999) as u8;
+
+        println!("{} {} {}", rbyte, gbyte, bbyte);
+    }
 }
 
 impl Vec3 {
@@ -128,7 +160,7 @@ impl Vec3 {
         }
     }
 
-    fn new_subtruct_vec(&self, v: Self) -> Self {
+    fn new_subtract_vec(&self, v: Self) -> Self {
         Self {
             x: self.x - v.x,
             y: self.y - v.y,
