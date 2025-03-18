@@ -2,24 +2,10 @@
 #include <cmath>
 
 
-int main() {
-    int image_width = 256;
-    int image_height = 256;
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = 0; j < image_height; j++) {
-        std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-        for (int i = 0; i < image_width; i++) {
-            auto r = double(i) / (image_width-1);
-            auto g = double(j) / (image_height-1);
-            auto b = 0.0;
-            int ir = int(255.999 * r);
-            int ig = int(255.999 * g);
-            int ib = int(255.999 * b);
-            std::cout << ir << ' ' << ig << ' ' << ib << '\n';
-        }
-    }
-    std::clog << "\rDone.    \n";
-}
+
+
+
+
 
 
 
@@ -112,4 +98,51 @@ inline vec3 cross(const vec3& u, const vec3& v) {
 
 inline vec3 unit_vector(const vec3& v) {
     return v/v.length();
+}
+
+
+
+
+
+
+using color = vec3;
+void write_color(std::ostream& out, const color pixel_color) {
+    auto r = pixel_color.x();
+    auto g = pixel_color.y();
+    auto b = pixel_color.z();
+
+    int rbyte = int(255.999 * r);
+    int gbyte = int(255.999 * g);
+    int bbyte = int(255.999 * b);
+
+    out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+}
+
+
+
+
+
+
+
+int main() {
+    int image_width = 256;
+    int image_height = 256;
+    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    for (int j = 0; j < image_height; j++) {
+        std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+        for (int i = 0; i < image_width; i++) {
+
+            auto pixel_color = color(double(i) / (image_width-1), double(j) / (image_height-1), 0);
+            write_color(std::cout, pixel_color);
+
+            // auto r = double(i) / (image_width-1);
+            // auto g = double(j) / (image_height-1);
+            // auto b = 0.0;
+            // int ir = int(255.999 * r);
+            // int ig = int(255.999 * g);
+            // int ib = int(255.999 * b);
+            // std::cout << ir << ' ' << ig << ' ' << ib << '\n';
+        }
+    }
+    std::clog << "\rDone.    \n";
 }
