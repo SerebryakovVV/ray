@@ -1,5 +1,6 @@
-use std::{fs::File, io::{self, BufWriter, Write}, path::{Path, PathBuf}};
+use std::{fs::File, io::{self, BufWriter, Write}, path::PathBuf};
 
+use crate::vector3::Color;
 
 pub struct Image {
   pub width: u16,
@@ -27,8 +28,22 @@ impl Image {
 
   }
 
-  pub fn write(&mut self, data: &str) {
-    writeln!(self.writer, "{data}").unwrap_or_else(|e| {
+  // pub fn write_color(&mut self, data: &str) {
+  //   writeln!(self.writer, "{data}").unwrap_or_else(|e| {
+  //     println!("Error writing a pixel: {}", e);
+  //     std::process::exit(0);
+  //   }); 
+  // }
+
+  pub fn write_color(&mut self, color: Color) {
+    let r = color.x;
+    let g = color.y;
+    let b = color.z;
+    let ir = (255.999 * r) as i16;
+    let ig = (255.999 * g) as i16;
+    let ib = (255.999 * b) as i16;
+    let pixel_string = format!("{} {} {}", ir, ig, ib);
+    writeln!(self.writer, "{pixel_string}").unwrap_or_else(|e| {
       println!("Error writing a pixel: {}", e);
       std::process::exit(0);
     }); 
