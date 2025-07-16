@@ -18,7 +18,6 @@ use std::{
 
 
 pub type Color = Vector3;
-pub type Ray = Vector3;
 pub type Point = Vector3;
 
 
@@ -67,6 +66,7 @@ impl Vector3 {
   pub fn unit_vector(v: &Self) -> Self {
     *v / v.length()
   }
+  
 }
 
 

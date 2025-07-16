@@ -28,13 +28,6 @@ impl Image {
 
   }
 
-  // pub fn write_color(&mut self, data: &str) {
-  //   writeln!(self.writer, "{data}").unwrap_or_else(|e| {
-  //     println!("Error writing a pixel: {}", e);
-  //     std::process::exit(0);
-  //   }); 
-  // }
-
   pub fn write_color(&mut self, color: Color) {
     let r = color.x;
     let g = color.y;
