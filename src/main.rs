@@ -4,12 +4,14 @@ mod ray;
 mod camera;
 mod hittable;
 mod sphere;
+mod interval;
 
 use image::Image;
 use vector3::{Color, Point, Vector3};
 use ray::Ray;
 use camera::Camera;
 use crate::hittable::{Hittable, HittableList, HittableObject};
+use crate::interval::Interval;
 use crate::sphere::Sphere;
 use std::f64::consts::PI;    
 use std::f64::INFINITY;
@@ -39,7 +41,7 @@ fn degrees_to_radians(degrees: f64) -> f64 {
 
 
 fn ray_color<T: Hittable>(ray: &Ray, world: &T) -> Color {
-  if let Some(rec) = world.hit(ray, 0.0, INFINITY) {
+  if let Some(rec) = world.hit(ray, Interval::new(0.0, INFINITY)) {
     return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
   }
   let unit_direction = Vector3::unit_vector(&ray.direction);

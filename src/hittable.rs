@@ -1,14 +1,15 @@
 use crate::{ray::Ray, vector3::{Point, Vector3}};
 use crate::sphere::Sphere;
+use crate::interval::Interval;
 
 pub enum HittableObject {
   Sphere(Sphere)
 }
 
 impl Hittable for HittableObject {
-  fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord> {
+  fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
     match self {
-      HittableObject::Sphere(s) => s.hit(ray, ray_tmin, ray_tmax)
+      HittableObject::Sphere(s) => s.hit(ray, ray_t)
     }
   }
 }
@@ -30,7 +31,7 @@ impl HitRecord {
 
 
 pub trait Hittable {
-  fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord>;
+  fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord>;
 }
 
 
@@ -49,11 +50,11 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-  fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord> {
+  fn hit(&self, ray: &Ray, ray_t: Interval) -> Option<HitRecord> {
     let mut hit_rec: Option<HitRecord> = None;
-    let mut closest_so_far = ray_tmax;
+    let mut closest_so_far = ray_t.max;
     for obj in &self.list {
-      if let Some(temp_rec) = obj.hit(ray, ray_tmin, closest_so_far) {
+      if let Some(temp_rec) = obj.hit(ray, Interval::new(ray_t.min, closest_so_far)) {
         closest_so_far = temp_rec.t;
         hit_rec = Some(temp_rec); 
       }
