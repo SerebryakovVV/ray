@@ -9,10 +9,10 @@ use image::Image;
 use vector3::{Color, Point, Vector3};
 use ray::Ray;
 use camera::Camera;
-
 use crate::hittable::{Hittable, HittableList, HittableObject};
 use crate::sphere::Sphere;
-
+use std::f64::consts::PI;    
+use std::f64::INFINITY;
 
 
 // look into implementing Deref trait and newtype pattern
@@ -33,29 +33,9 @@ const VIEWPORT_HEIGHT: f64 = 2.0;
 const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * (IMAGE_WIDTH as f64 / IMAGE_HEIGHT as f64);
 
 
-
-use std::f64::consts::PI;    
-use std::f64::INFINITY;
-
-
 fn degrees_to_radians(degrees: f64) -> f64 {
-  degrees * std::f64::consts::PI / 180.0
+  degrees * PI / 180.0
 }
-
-
-fn hit_sphere(center: Point, radius: f64, ray: &Ray) -> f64 {
-  let oc = center - ray.origin;
-  let a = ray.direction.length_squared();
-  let h = Vector3::dot(ray.direction, oc);
-  let c = oc.length_squared() - radius * radius;
-  let discriminant = h * h - a * c;
-  if discriminant < 0.0 {
-    -1.0
-  } else {
-    (h - discriminant.sqrt()) / a
-  }
-}
-
 
 
 fn ray_color<T: Hittable>(ray: &Ray, world: &T) -> Color {
@@ -68,8 +48,6 @@ fn ray_color<T: Hittable>(ray: &Ray, world: &T) -> Color {
 }
 
 
-
-
 fn main() {
   let name = std::env::args().collect::<Vec<String>>()
                              .into_iter()
@@ -77,25 +55,15 @@ fn main() {
                              .next()
                              .unwrap_or_else(||{
                                 println!("No name provided");
-                                std::process::exit(0);});
-  
-  
+                                std::process::exit(0);});  
   let mut img = Image::new(IMAGE_WIDTH, IMAGE_HEIGHT, &name).unwrap_or_else(|e| {
     println!("Error occured while creating a file: {}", e);
     std::process::exit(0);
   });
-  
-  
-  
   let cam = Camera::new();  
-
-
   let mut world = HittableList::new();
   world.list.push(HittableObject::Sphere(Sphere::new(Point::new(0.0, 0.0, -1.0), 0.5)));
   world.list.push(HittableObject::Sphere(Sphere::new(Point::new(0.0, -100.5, -1.0), 100.0)));
-  
-
-
   for row in 0..img.height {
     println!("Rows remain: {}", img.height - row);
     for col in 0..img.width {
