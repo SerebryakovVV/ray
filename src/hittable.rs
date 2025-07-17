@@ -1,7 +1,7 @@
 use crate::{ray::Ray, vector3::{Point, Vector3}};
 use crate::sphere::Sphere;
 
-enum HittableObject {
+pub enum HittableObject {
   Sphere(Sphere)
 }
 
@@ -41,7 +41,7 @@ pub struct HittableList {
 
 
 impl HittableList {
-  fn new() -> Self {
+  pub fn new() -> Self {
     Self {
       list: Vec::new()
     }
