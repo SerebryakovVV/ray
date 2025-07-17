@@ -2,6 +2,8 @@ mod image;
 mod vector3;
 mod ray;
 mod camera;
+mod hittable;
+mod sphere;
 
 use image::Image;
 use vector3::{Color, Point, Vector3};
@@ -30,23 +32,27 @@ const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * (IMAGE_WIDTH as f64 / IMAGE_HEIGHT
 
 
 
-fn hit_sphere(center: Point, radius: f64, ray: &Ray) -> bool {
+fn hit_sphere(center: Point, radius: f64, ray: &Ray) -> f64 {
   let oc = center - ray.origin;
-  let a = Vector3::dot(ray.direction, ray.direction);
-  let b = -2.0 * Vector3::dot(ray.direction, oc);
-  let c = Vector3::dot(oc, oc) - radius * radius;
-  let discriminant = b * b - 4.0 * a * c;
-  discriminant >= 0.0
+  let a = ray.direction.length_squared();
+  let h = Vector3::dot(ray.direction, oc);
+  let c = oc.length_squared() - radius * radius;
+  let discriminant = h * h - a * c;
+  if discriminant < 0.0 {
+    -1.0
+  } else {
+    (h - discriminant.sqrt()) / a
+  }
 }
 
 
 
 fn ray_color(ray: Ray) -> Color {
-
-  if hit_sphere(Point::new(0.0, 0.0, -1.0), 0.5, &ray) {
-    return Color::new(1.0, 0.0, 0.0);
-  };
-
+  let t = hit_sphere(Point::new(0.0, 0.0, -1.0), 0.5, &ray);
+  if t > 0.0 {
+    let n = Vector3::unit_vector(&(ray.at(t) - Vector3::new(0.0, 0.0, -1.0)));
+    return 0.5 * Color::new(n.x + 1.0, n.y + 1.0, n.z + 1.0);
+  }
   let unit_direction = Vector3::unit_vector(&ray.direction);
   let a = 0.5 * (unit_direction.y + 1.0);
   (1.0 - a) * Color::new(1.0, 1.0, 1.0) +  a * Color::new(0.5, 0.7, 1.0)
