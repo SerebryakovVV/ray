@@ -31,6 +31,14 @@ const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * (IMAGE_WIDTH as f64 / IMAGE_HEIGHT
 
 
 
+// let pi = std::f64::consts::PI;    
+// let infinity = std::f64::INFINITY;
+
+
+fn degrees_to_radians(degrees: f64) -> f64 {
+  degrees * std::f64::consts::PI / 180.0
+}
+
 
 fn hit_sphere(center: Point, radius: f64, ray: &Ray) -> f64 {
   let oc = center - ray.origin;

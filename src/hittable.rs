@@ -1,13 +1,63 @@
 use crate::{ray::Ray, vector3::{Point, Vector3}};
+use crate::sphere::Sphere;
 
+enum HittableObject {
+  Sphere(Sphere)
+}
+
+impl Hittable for HittableObject {
+  fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord> {
+    match self {
+      HittableObject::Sphere(s) => s.hit(ray, ray_tmin, ray_tmax)
+    }
+  }
+}
 
 pub struct HitRecord {
   pub p: Point,
   pub normal: Vector3,
-  pub t: f64
+  pub t: f64,
+  pub front_face: bool
+}
+
+
+impl HitRecord {
+  pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vector3) {
+    self.front_face = Vector3::dot(ray.direction, outward_normal) < 0.0;
+    self.normal = if self.front_face {outward_normal} else {-outward_normal};
+  }
 }
 
 
 pub trait Hittable {
-  fn hit(ray: Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord>;
+  fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord>;
+}
+
+
+
+pub struct HittableList {
+  pub list: Vec<HittableObject>
+}
+
+
+impl HittableList {
+  fn new() -> Self {
+    Self {
+      list: Vec::new()
+    }
+  }
+}
+
+impl Hittable for HittableList {
+  fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64) -> Option<HitRecord> {
+    let mut hit_rec: Option<HitRecord> = None;
+    let mut closest_so_far = ray_tmax;
+    for obj in &self.list {
+      if let Some(temp_rec) = obj.hit(ray, ray_tmin, closest_so_far) {
+        closest_so_far = temp_rec.t;
+        hit_rec = Some(temp_rec); 
+      }
+    }
+    hit_rec
+  }
 }
