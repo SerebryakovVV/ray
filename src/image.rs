@@ -1,6 +1,6 @@
 use std::{fs::File, io::{self, BufWriter, Write}, path::PathBuf};
 
-use crate::vector3::Color;
+use crate::{interval::Interval, vector3::Color};
 
 pub struct Image {
   pub width: u16,
@@ -32,10 +32,11 @@ impl Image {
     let r = color.x;
     let g = color.y;
     let b = color.z;
-    let ir = (255.999 * r) as i16;
-    let ig = (255.999 * g) as i16;
-    let ib = (255.999 * b) as i16;
-    let pixel_string = format!("{} {} {}", ir, ig, ib);
+    let intensity = Interval::new(0.000, 0.999);
+    let rbyte = (256.0 * intensity.clamp(r)) as i16;
+    let gbyte = (256.0 * intensity.clamp(g)) as i16;
+    let bbyte = (256.0 * intensity.clamp(b)) as i16;
+    let pixel_string = format!("{} {} {}", rbyte, gbyte, bbyte);
     writeln!(self.writer, "{pixel_string}").unwrap_or_else(|e| {
       println!("Error writing a pixel: {}", e);
       std::process::exit(0);

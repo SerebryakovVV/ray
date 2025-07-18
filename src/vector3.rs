@@ -16,7 +16,6 @@ use std::{
 };
 
 
-
 pub type Color = Vector3;
 pub type Point = Vector3;
 
@@ -66,7 +65,38 @@ impl Vector3 {
   pub fn unit_vector(v: &Self) -> Self {
     *v / v.length()
   }
+
+  pub fn random() -> Self {
+    Self::new(rand::random::<f64>(), rand::random::<f64>(), rand::random::<f64>())
+  }
+
+  pub fn random_in(min: f64, max: f64) -> Self {
+    Self::new(
+      rand::random_range(min..max),
+      rand::random_range(min..max),
+      rand::random_range(min..max)
+    )
+  }
   
+  pub fn random_unit_vector() -> Self {
+    loop {
+      let p = Vector3::random_in(-1.0, 1.0);
+      let lensq = p.length_squared();
+      if lensq <= 1.0 && lensq > 1e-160 {
+        return p / lensq.sqrt();
+      }
+    }
+  }
+
+  pub fn random_on_hemishpere(normal: Vector3) -> Self {
+    let on_unit_sphere = Vector3::random_unit_vector();
+    if Vector3::dot(on_unit_sphere, normal) > 0.0 {
+      on_unit_sphere
+    } else {
+      -on_unit_sphere
+    }
+  }
+
 }
 
 
