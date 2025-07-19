@@ -1,4 +1,4 @@
-use crate::material::{MaterialType, Metal};
+use crate::material::{MaterialType};
 use crate::vector3::{Vector3, Point};
 use crate::hittable::{Hittable, HitRecord};
 use crate::ray::Ray;
@@ -13,11 +13,10 @@ pub struct Sphere {
 
 impl Sphere {
   pub fn new(center: Point, radius: f64, mat: MaterialType) -> Self {
-    // TODO: choose the material here, metal for now
     Self {
       center,
       radius: radius.max(0.0),
-      mat  // TODO: check this
+      mat
     }
   }
 }

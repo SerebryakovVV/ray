@@ -3,7 +3,8 @@ use crate::{hittable::HitRecord, ray::Ray, vector3::{Color, Vector3}};
 #[derive(Clone, Copy)]
 pub enum MaterialType {
   Metal(Metal),
-  Lambertian(Lambertian)
+  Lambertian(Lambertian),
+  Dielectric(Dielectric)
 }
 
 impl Material for MaterialType {
@@ -11,6 +12,7 @@ impl Material for MaterialType {
     match self {
       MaterialType::Metal(m)      => m.scatter(r_in, rec),
       MaterialType::Lambertian(l) => l.scatter(r_in, rec),
+      MaterialType::Dielectric(d) => d.scatter(r_in, rec),
     }
   }
 }
@@ -18,10 +20,11 @@ impl Material for MaterialType {
 
 
 
-// instead of output parameters we have an option tuple
 pub trait Material {
   fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)>;
 }
+
+
 
 
 #[derive(Clone, Copy)]
@@ -29,13 +32,11 @@ pub struct Lambertian {
   albedo: Color
 }
 
-
 impl Lambertian {
   pub fn new(albedo: Color) -> Self {
     Self {albedo}
   } 
 }
-
 
 impl Material for Lambertian {
   fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
@@ -48,6 +49,7 @@ impl Material for Lambertian {
     Some((attenuation, scattered))
   }
 }
+
 
 
 
@@ -77,5 +79,50 @@ impl Material for Metal {
     } else {
       None
     }
+  }
+}
+
+
+
+
+
+
+
+#[derive(Clone, Copy)]
+pub struct Dielectric {
+  refraction_index: f64
+}
+
+impl Dielectric {
+  pub fn new(refraction_index: f64) -> Self {
+    Self {refraction_index}
+  }
+
+  pub fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+    let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+    r0 = r0 * r0;
+    r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
+  }
+}
+
+impl Material for Dielectric {
+  fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
+    let attenuation = Color::new(1.0, 1.0, 1.0);
+    let ri = if rec.front_face {
+      1.0 / self.refraction_index
+    } else {
+      self.refraction_index
+    };
+    let unit_direction = Vector3::unit_vector(&r_in.direction);
+    let cos_theta = 1.0f64.min(Vector3::dot(-unit_direction, rec.normal));
+    let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+    let cannot_refract = ri * sin_theta > 1.0;
+    let direction = if cannot_refract || Self::reflectance(cos_theta, ri) > rand::random() {
+      Vector3::reflect(unit_direction, rec.normal)
+    } else {
+      Vector3::refract(unit_direction, rec.normal, ri)
+    };
+    let scattered = Ray::new(rec.p, direction);
+    Some((attenuation, scattered))
   }
 }

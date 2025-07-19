@@ -8,32 +8,18 @@ mod interval;
 mod material;
 
 use image::Image;
-use vector3::{Color, Point, Vector3};
-use ray::Ray;
+use vector3::{Color, Point};
 use camera::Camera;
-use crate::hittable::{Hittable, HittableList, HittableObject};
-use crate::interval::Interval;
-use crate::material::{Lambertian, MaterialType, Metal};
+use crate::hittable::{HittableList, HittableObject};
+use crate::material::{Dielectric, Lambertian, MaterialType, Metal};
 use crate::sphere::Sphere;
 use std::f64::consts::PI;    
-use std::f64::INFINITY;
-use rand::{self, Rng};
-
-// look into implementing Deref trait and newtype pattern
-
-// the direction of the vector is just the ammount of movement in each coordinate direction
-// normalization is the same but its mapped onto 0-1 range
-
-
-// pixel spacing - distance between pixels
-
 
 
 // optimize the random generation
 
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0; 
-// const IMAGE_WIDTH: u16 = 1920;
 const IMAGE_WIDTH: u16 = 400;
 const IMAGE_HEIGHT: u16 = {
   let temp = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u16;
@@ -62,38 +48,20 @@ fn main() {
   });
   let mut cam = Camera::new(img);  
   let mut world = HittableList::new();
-
-
-
-
-
-    //   auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    // auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-    // auto material_left   = make_shared<metal>(color(0.8, 0.8, 0.8));
-    // auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2));
-
-    // world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
-    // world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.2),   0.5, material_center));
-    // world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-    // world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-
-
-
   let material_ground = MaterialType::Lambertian(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
   let material_center = MaterialType::Lambertian(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
-  let material_left = MaterialType::Metal(Metal::new(Color::new(0.8, 0.8, 0.8), 0.2));
-  let material_right = MaterialType::Metal(Metal::new(Color::new(0.8, 0.6, 0.2), 0.6));
-  
+  let material_left = MaterialType::Dielectric(Dielectric::new(1.5));
+  let material_bubble = MaterialType::Dielectric(Dielectric::new(1.0 / 1.5));
+  let material_right = MaterialType::Metal(Metal::new(Color::new(0.8, 0.6, 0.2), 0.1));
   world.list.push(
     HittableObject::Sphere(
       Sphere::new(
-        Point::new(0.0,    0.0, -1.2), 
+        Point::new(0.0,  0.0, -1.5), 
         0.5,
         material_center
       )
     )
   );
-
   world.list.push(
     HittableObject::Sphere(
       Sphere::new(
@@ -103,20 +71,24 @@ fn main() {
       )
     )
   );
-
-      // world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-    // world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-
-    world.list.push(
-    HittableObject::Sphere(
-      Sphere::new(
-        Point::new(-1.0,    0.0, -1.0), 
-        0.5,
-        material_left
-      )
+  world.list.push(
+  HittableObject::Sphere(
+    Sphere::new(
+      Point::new(-1.0,    0.0, -1.0), 
+      0.5,
+      material_left
     )
+  )
   );
-
+  world.list.push(
+  HittableObject::Sphere(
+    Sphere::new(
+      Point::new(-1.0,    0.0, -1.0), 
+      0.4,
+      material_bubble
+    )
+  )
+  );
   world.list.push(
     HittableObject::Sphere(
       Sphere::new(
@@ -126,9 +98,6 @@ fn main() {
       )
     )
   );
-
-
-  // : MaterialType::Metal(Metal::new(Vector3::new(0.5, 0.5, 0.5)))
   cam.render(&world);
   cam.img.open_image();
 }
