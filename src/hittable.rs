@@ -1,4 +1,4 @@
-use crate::{ray::Ray, vector3::{Point, Vector3}};
+use crate::{material::{Material, MaterialType}, ray::Ray, vector3::{Point, Vector3}};
 use crate::sphere::Sphere;
 use crate::interval::Interval;
 
@@ -18,7 +18,8 @@ pub struct HitRecord {
   pub p: Point,
   pub normal: Vector3,
   pub t: f64,
-  pub front_face: bool
+  pub front_face: bool,
+  pub material: MaterialType
 }
 
 

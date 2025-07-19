@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::hittable::{Hittable, HittableList};
 use crate::image::Image;
 use crate::interval::Interval;
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vector3::{Color, Point, Vector3};
 use crate::{
@@ -26,7 +27,8 @@ pub struct Camera {
   pub img: Image,
   pub samples_per_pixel: i32,
   pub pixel_samples_scale: f64,
-  pub rng: ThreadRng
+  pub rng: ThreadRng,
+  pub max_depth: i32
 }
 
 
@@ -46,6 +48,7 @@ impl Camera {
     let samples_per_pixel = 100;
     let pixel_samples_scale = 1.0 / samples_per_pixel as f64;
     let rng = rand::rng();
+    let max_depth = 50;
   // rnd.random::<f64>();
     Self { 
       focal_length,
@@ -59,15 +62,27 @@ impl Camera {
       img,
       samples_per_pixel,
       pixel_samples_scale,
-      rng
+      rng,
+      max_depth
     }
   }
 
 
-  pub fn ray_color<T: Hittable>(&self, ray: &Ray, world: &T) -> Color {
-    if let Some(rec) = world.hit(ray, Interval::new(0.0, INFINITY)) {
-      let direction = Vector3::random_on_hemishpere(rec.normal);
-      return 0.5 * self.ray_color(&Ray::new(rec.p, direction), world);
+  pub fn ray_color<T: Hittable>(&self, ray: &Ray, depth: i32, world: &T) -> Color {
+    if depth <= 0 {
+      return Color::new(0.0, 0.0, 0.0);
+    }
+    if let Some(rec) = world.hit(ray, Interval::new(0.001, INFINITY)) {  // here we have a problem with output parameters
+      
+      if let Some((attenuation, scattered)) = rec.material.scatter(ray, &rec) {
+        return attenuation * self.ray_color(&scattered, depth - 1, world);
+      } else {
+        return Color::new(0.0, 0.0, 0.0)
+      }  // here we probably implement the static dispatch
+
+
+      // let direction = rec.normal + Vector3::random_unit_vector();
+      // return 0.7 * self.ray_color(&Ray::new(rec.p, direction), depth - 1, world);
     }
     let unit_direction = Vector3::unit_vector(&ray.direction);
     let a = 0.5 * (unit_direction.y + 1.0);
@@ -81,7 +96,7 @@ impl Camera {
         let mut color = Color::new(0.0, 0.0, 0.0);
         for s in 0..self.samples_per_pixel {
           let ray = self.get_ray(col, row);
-          color += self.ray_color(&ray, world);
+          color += self.ray_color(&ray, self.max_depth, world);
         };
         self.img.write_color(self.pixel_samples_scale * color);      
       }
@@ -105,4 +120,12 @@ impl Camera {
       0.0
     )
   } 
+
+  pub fn linear_to_gamma(linear_component: f64) -> f64 {
+    if linear_component > 0.0 {
+      linear_component.sqrt()
+    } else {
+      0.0
+    }
+  }
 }

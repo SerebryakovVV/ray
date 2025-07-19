@@ -1,6 +1,7 @@
 use std::{fs::File, io::{self, BufWriter, Write}, path::PathBuf};
 
 use crate::{interval::Interval, vector3::Color};
+use crate::camera::Camera;
 
 pub struct Image {
   pub width: u16,
@@ -29,9 +30,14 @@ impl Image {
   }
 
   pub fn write_color(&mut self, color: Color) {
-    let r = color.x;
-    let g = color.y;
-    let b = color.z;
+    let mut r = color.x;
+    let mut g = color.y;
+    let mut b = color.z;
+
+    r = Camera::linear_to_gamma(r);
+    g = Camera::linear_to_gamma(g);
+    b = Camera::linear_to_gamma(b);
+
     let intensity = Interval::new(0.000, 0.999);
     let rbyte = (256.0 * intensity.clamp(r)) as i16;
     let gbyte = (256.0 * intensity.clamp(g)) as i16;

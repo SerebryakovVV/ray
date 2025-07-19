@@ -1,3 +1,4 @@
+use crate::material::{MaterialType, Metal};
 use crate::vector3::{Vector3, Point};
 use crate::hittable::{Hittable, HitRecord};
 use crate::ray::Ray;
@@ -5,15 +6,18 @@ use crate::interval::Interval;
 
 pub struct Sphere {
   pub center: Point,
-  pub radius: f64
+  pub radius: f64,
+  pub mat: MaterialType
 }
 
 
 impl Sphere {
-  pub fn new(center: Point, radius: f64) -> Self {
+  pub fn new(center: Point, radius: f64, mat: MaterialType) -> Self {
+    // TODO: choose the material here, metal for now
     Self {
       center,
-      radius: radius.max(0.0)
+      radius: radius.max(0.0),
+      mat  // TODO: check this
     }
   }
 }
@@ -31,7 +35,6 @@ impl Hittable for Sphere {
     };
     let sqrtd = discriminant.sqrt();
     let mut root = (h - sqrtd) / a;
-    // if root <= ray_tmin || ray_tmax <= root {
     if !ray_t.surrounds(root) {
       root = (h + sqrtd) / a;
       if !ray_t.surrounds(root) {
@@ -42,11 +45,13 @@ impl Hittable for Sphere {
     let t = root;
     let p = ray.at(t);
     let outward_normal = (p - self.center) / self.radius;
+    let material = self.mat;
     let mut hr = HitRecord {
       t,
       p,
       normal: Vector3 { x: 0.0, y: 0.0, z: 0.0 },
-      front_face: false
+      front_face: false,
+      material
     };
     hr.set_face_normal(ray, outward_normal);
     Some(hr) 
