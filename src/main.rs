@@ -1,3 +1,5 @@
+// ffmpeg -i .\images\glass_full_hd.ppm -update 1 .\images\glass_full_hd.png
+
 mod image;
 mod vector3;
 mod ray;
@@ -16,17 +18,12 @@ use crate::sphere::Sphere;
 use std::f64::consts::PI;    
 
 
-// optimize the random generation
-
-
 const ASPECT_RATIO: f64 = 16.0 / 9.0; 
-const IMAGE_WIDTH: u16 = 400;
+const IMAGE_WIDTH: u16 = 1920;
 const IMAGE_HEIGHT: u16 = {
   let temp = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u16;
   if temp < 1 {1} else {temp}
 };
-const VIEWPORT_HEIGHT: f64 = 2.0;
-const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * (IMAGE_WIDTH as f64 / IMAGE_HEIGHT as f64);
 
 
 fn degrees_to_radians(degrees: f64) -> f64 {
@@ -74,7 +71,8 @@ fn main() {
   world.list.push(
   HittableObject::Sphere(
     Sphere::new(
-      Point::new(-1.0,    0.0, -1.0), 
+      // Point::new(-1.0, 0.0, -1.0), 
+      Point::new(-0.8, 0.0, -1.0), 
       0.5,
       material_left
     )
@@ -83,7 +81,8 @@ fn main() {
   world.list.push(
   HittableObject::Sphere(
     Sphere::new(
-      Point::new(-1.0,    0.0, -1.0), 
+      // Point::new(-1.0, 0.0, -1.0), 
+      Point::new(-0.8, 0.0, -1.0), 
       0.4,
       material_bubble
     )
@@ -92,7 +91,7 @@ fn main() {
   world.list.push(
     HittableObject::Sphere(
       Sphere::new(
-        Point::new(1.0,    0.0, -1.0), 
+        Point::new(1.0, 0.0, -1.0), 
         0.5,
         material_right
       )

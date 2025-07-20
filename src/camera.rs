@@ -10,13 +10,11 @@ use crate::vector3::{Color, Point, Vector3};
 use crate::{
   IMAGE_WIDTH,
   IMAGE_HEIGHT,
-  VIEWPORT_WIDTH,
-  VIEWPORT_HEIGHT,
+  degrees_to_radians
 };
 
 
 pub struct Camera {
-  pub focal_length: f64,
   pub camera_center: Vector3,
   pub viewport_u: Vector3,
   pub viewport_v: Vector3,
@@ -28,30 +26,51 @@ pub struct Camera {
   pub samples_per_pixel: i32,
   pub pixel_samples_scale: f64,
   pub rng: ThreadRng,
-  pub max_depth: i32
+  pub max_depth: i32,
+  pub vfov: f64,
+  pub u: Vector3,
+  pub v: Vector3,
+  pub w: Vector3,
+  defocus_disk_u: Vector3,
+  defocus_disk_v: Vector3,
+  pub defocus_angle: f64,
+  pub focus_dist: f64,
 }
 
 
 impl Camera {
   pub fn new(img: Image) -> Self {
-    let focal_length = 1.0;
-    let camera_center = Point::new(0.0, 0.0, 0.0);
-    let viewport_u = Vector3::new(VIEWPORT_WIDTH, 0.0, 0.0);
-    let viewport_v = Vector3::new(0.0, -VIEWPORT_HEIGHT, 0.0);
+    let vfov = 90.0;
+    let lookfrom = Point::new(0.0, 0.0, 0.4);
+    let lookat = Point::new(0.0, 0.0, -1.0);
+    let vup = Vector3::new(0.0, 1.0, 0.0);
+    let defocus_angle = 0.6;
+    let focus_dist = 10.0;
+    let w = Vector3::unit_vector(&(lookfrom - lookat));
+    let u = Vector3::unit_vector(&Vector3::cross(vup, w));
+    let v = Vector3::cross(w, u);
+    let theta = degrees_to_radians(vfov);
+    let h = (theta / 2.0).tan();
+    let viewport_height = 2.0 * h * focus_dist;
+    let viewport_widht = viewport_height * (IMAGE_WIDTH as f64 / IMAGE_HEIGHT as f64);
+    let camera_center = lookfrom;
+    let viewport_u = viewport_widht * u;
+    let viewport_v = viewport_height * -v;
     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
     let viewport_upper_left = camera_center 
-                            - Vector3::new(0.0, 0.0, focal_length) 
+                            - focus_dist * w 
                             - viewport_u / 2.0 
                             - viewport_v / 2.0;
+    let defocus_radius = focus_dist * (degrees_to_radians(defocus_angle / 2.0)).tan();
+    let defocus_disk_u = u * defocus_radius;
+    let defocus_disk_v = v * defocus_radius;
     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 500;
     let pixel_samples_scale = 1.0 / samples_per_pixel as f64;
     let rng = rand::rng();
     let max_depth = 50;
-  // rnd.random::<f64>();
     Self { 
-      focal_length,
       camera_center,
       viewport_u,
       viewport_v,
@@ -63,26 +82,28 @@ impl Camera {
       samples_per_pixel,
       pixel_samples_scale,
       rng,
-      max_depth
+      max_depth,
+      vfov,
+      u, 
+      v,
+      w,
+      defocus_disk_u,
+      defocus_disk_v,
+      defocus_angle,
+      focus_dist
     }
   }
-
 
   pub fn ray_color<T: Hittable>(&self, ray: &Ray, depth: i32, world: &T) -> Color {
     if depth <= 0 {
       return Color::new(0.0, 0.0, 0.0);
     }
-    if let Some(rec) = world.hit(ray, Interval::new(0.001, INFINITY)) {  // here we have a problem with output parameters
-      
+    if let Some(rec) = world.hit(ray, Interval::new(0.001, INFINITY)) {
       if let Some((attenuation, scattered)) = rec.material.scatter(ray, &rec) {
         return attenuation * self.ray_color(&scattered, depth - 1, world);
       } else {
         return Color::new(0.0, 0.0, 0.0)
-      }  // here we probably implement the static dispatch
-
-
-      // let direction = rec.normal + Vector3::random_unit_vector();
-      // return 0.7 * self.ray_color(&Ray::new(rec.p, direction), depth - 1, world);
+      }
     }
     let unit_direction = Vector3::unit_vector(&ray.direction);
     let a = 0.5 * (unit_direction.y + 1.0);
@@ -108,9 +129,14 @@ impl Camera {
     let pixel_sample = self.pixel00_loc
                    + ((col as f64 + offset.x) * self.pixel_delta_u)
                    + ((row as f64 + offset.y) * self.pixel_delta_v);
-    let ray_origin = self.camera_center;
+    let ray_origin = if self.defocus_angle <= 0.0 {self.camera_center} else {self.defocus_disk_sample()};
     let ray_direction = pixel_sample - ray_origin;
     Ray::new(ray_origin, ray_direction)
+  }
+
+  pub fn defocus_disk_sample(&self) -> Point {
+    let p = Vector3::random_in_unit_disk();
+    self.camera_center + (p.x * self.defocus_disk_u) + (p.y * self.defocus_disk_v)
   }
 
   pub fn sample_square(&mut self) -> Vector3 {

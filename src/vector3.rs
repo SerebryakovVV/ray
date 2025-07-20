@@ -1,15 +1,3 @@
-// i have a base struct of vector3 with x,y,z. Then, i guess, i have 3 newtypes
-// for point, ray and color. Then i have vector3base trait, that has all the 
-// methods that could be on any of these newtypes, and also these methods have 
-// default implementations. Well, whats next, then i have some methods that are 
-// unique for each newtype and i implement them separately? in impl newtypename 
-// {} i supose. And then i will also have operator overloading 
-
-
-// Dot product = how aligned two vectors are (a number).
-// Cross product = perpendicular vector that encodes area and orientation.
-// Unit vector = direction vector with length 1, stripped of scale.
-
 use std::{
   fmt::Display, 
   ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub}
@@ -117,6 +105,15 @@ impl Vector3 {
         .sqrt() 
       * n;    
     r_out_perp + r_out_parallel
+  }
+
+  pub fn random_in_unit_disk() -> Self {
+    loop {
+      let p = Vector3::new(rand::random_range(-1..1), rand::random_range(-1..1), 0);
+      if p.length_squared() < 1.0 {
+        return p;
+      }
+    }
   }
 
 }
