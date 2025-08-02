@@ -15,7 +15,8 @@ use camera::Camera;
 use crate::hittable::{HittableList, HittableObject};
 use crate::material::{Dielectric, Lambertian, MaterialType, Metal};
 use crate::sphere::Sphere;
-use std::f64::consts::PI;    
+use std::f64::consts::PI;
+use std::sync::Arc;    
 
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0; 
@@ -44,12 +45,12 @@ fn main() {
     std::process::exit(0);
   });
   let mut cam = Camera::new(img);  
-  let mut world = HittableList::new();
   let material_ground = MaterialType::Lambertian(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
   let material_center = MaterialType::Lambertian(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
   let material_left = MaterialType::Dielectric(Dielectric::new(1.5));
   let material_bubble = MaterialType::Dielectric(Dielectric::new(1.0 / 1.5));
   let material_right = MaterialType::Metal(Metal::new(Color::new(0.8, 0.6, 0.2), 0.1));
+  let mut world = HittableList::new();
   world.list.push(
     HittableObject::Sphere(
       Sphere::new(
@@ -97,6 +98,8 @@ fn main() {
       )
     )
   );
-  cam.render(&world);
+  let shared_world = Arc::new(world);
+  // cam.render(&world);
+  cam.render_threaded(shared_world);
   cam.img.open_image();
 }

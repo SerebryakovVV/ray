@@ -1,6 +1,10 @@
+use std::cell::UnsafeCell;
 use std::f64::INFINITY;
+use std::sync::Arc;
+use std::thread;
 use rand::rngs::ThreadRng;
 use rand::Rng;
+use image::RgbImage;
 use crate::hittable::{Hittable, HittableList};
 use crate::image::Image;
 use crate::interval::Interval;
@@ -122,6 +126,77 @@ impl Camera {
         self.img.write_color(self.pixel_samples_scale * color);      
       }
     }
+  }
+
+  pub fn render_threaded(&mut self, world: Arc<HittableList>) {
+    // we got the shared access to the world list
+    // we make an array and split divide it by threads
+    // we spawn threads
+    // each thread calculates its stuff and writes to its chunk
+    // at the end we have an array of pixels that we convert to png
+    
+    
+
+
+    let threaded_buffer
+      : Arc::<[UnsafeCell<(u8, u8, u8)>]> 
+      = Arc::from(
+        (0..IMAGE_WIDTH*IMAGE_HEIGHT)
+          .map(|_| UnsafeCell::new((0,0,0)))
+          .collect::<Vec<UnsafeCell<(u8, u8, u8)>>>());
+
+    let thread_count = thread::available_parallelism().map_or(4, |c| c.get() as u16);
+    println!("{}", thread_count);
+
+    let rows_per_thread = IMAGE_HEIGHT / thread_count;
+    let remainder_rows = IMAGE_HEIGHT % thread_count;
+
+    let mut handles = Vec::with_capacity(thread_count as usize);
+
+    for t in 0..thread_count {
+      let start_row = t * rows_per_thread;
+      let end_row 
+        = start_row 
+        + rows_per_thread 
+        + if t == thread_count - 1 
+            {remainder_rows}
+          else {0};
+
+      let buffer_clone = Arc::clone(&threaded_buffer);
+      let world_clone = Arc::clone(&world);
+
+      handles.push(
+        thread::spawn(move || {
+          // for row in start_row..end_row {
+          //   for col in 0..IMAGE_WIDTH {
+          //     let mut color = Color::new(0.0, 0.0, 0.0);
+          //     for s in 0..self.samples_per_pixel {
+          //       let ray = self.get_ray(col, row);
+          //       color += self.ray_color(&ray, self.max_depth, world_clone.as_ref());
+          //     };
+          //   }
+          // }
+        })
+      );
+
+
+  //   for row in 0..self.img.height {
+  //     for col in 0..self.img.width {
+  //       let mut color = Color::new(0.0, 0.0, 0.0);
+  //       for s in 0..self.samples_per_pixel {
+  //         let ray = self.get_ray(col, row);
+  //         color += self.ray_color(&ray, self.max_depth, world);
+  //       };
+  //       self.img.write_color(self.pixel_samples_scale * color);      
+  //     }
+  //   }
+  // }
+      
+    }
+    
+
+    // add a function to return a color instead of writing it to the buffer // self.img.get_color_threaded()
+    // let mut image = RgbImage::new(IMAGE_WIDTH.into(), IMAGE_HEIGHT.into());
   }
 
   pub fn get_ray(&mut self, col: u16, row: u16) -> Ray {
